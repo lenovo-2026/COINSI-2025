@@ -1,0 +1,6 @@
+Usuario: aa | Contraseña: aa | Fecha: 2025-11-20 03:37:07 | IP: ::1
+Usuario: zz | Contraseña: zzzz | Fecha: 2025-11-20 03:39:11 | IP: ::1
+Usuario: dedy | Contraseña: dedy | Fecha: 2025-11-20 03:39:41 | IP: ::1
+Usuario: dedy | Contraseña: dedy | Fecha: 2025-11-20 04:21:44 | IP: ::1
+Usuario: aa | Contraseña: ssssddsadasdasd | Fecha: 2025-11-20 04:21:50 | IP: ::1
+Usuario: ccc | Contraseña: vvv | Fecha: 2025-11-20 04:22:04 | IP: ::1
